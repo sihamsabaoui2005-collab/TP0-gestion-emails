@@ -201,7 +201,7 @@
     <div class="titre">Gestion des<br>adresses email</div>
 
     <!-- Barre d'upload centree (fonctionnelle) -->
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" action="televerser.php">
         <label class="barre-upload" for="fichierInput">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 16V8m0 0l-3 3m3-3l3 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 18a4 4 0 01-.6-7.96A5 5 0 0117 9.06 3.5 3.5 0 0116.5 16H7z" stroke="white" stroke-width="2"/></svg>
             <span id="texteFichier">Télécharger un fichier Emails.txt</span>
@@ -210,7 +210,7 @@
             </span>
         </label>
         <input type="file" id="fichierInput" name="fichierEmails" accept=".txt"
-               onchange="document.getElementById('texteFichier').textContent = this.files[0] ? this.files[0].name : 'Télécharger un fichier Emails.txt'">
+               onchange="document.getElementById('texteFichier').textContent = this.files[0] ? this.files[0].name : 'Télécharger un fichier Emails.txt'; this.form.submit();">
     </form>
 
     <!-- Ligne 1 : 3 grandes cartes -->
