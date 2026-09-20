@@ -116,7 +116,7 @@
     }
 
     .grille-haut { grid-template-columns: repeat(3, 1fr); }
-    .grille-bas  { grid-template-columns: repeat(4, 1fr); }
+    .grille-bas  { grid-template-columns: repeat(3, 1fr); }
 
     /* ---- Cartes : grandes, image bien visible, un seul texte en bas ---- */
     .carte {
@@ -241,9 +241,6 @@
             <div class="carte-texte"><span>Ajouter une adresse</span><span class="fleche">→</span></div>
         </a>
 
-        <a href="modifier_adresse.php" class="carte violet" style="background-image:url('icons/ajouter_adresse2.png')">
-            <div class="carte-texte"><span>Ajouter une adresse</span><span class="fleche">→</span></div>
-        </a>
 
         <a href="historique.php" class="carte orange" style="background-image:url('icons/historique.png')">
             <div class="carte-texte"><span>Historique des envois</span><span class="fleche">→</span></div>
