@@ -116,7 +116,11 @@
     }
 
     .grille-haut { grid-template-columns: repeat(3, 1fr); }
-    .grille-bas  { grid-template-columns: repeat(3, 1fr); }
+    .grille-bas  {
+        /* 2 cartes de la même largeur que celles du haut, centrées */
+        grid-template-columns: repeat(2, calc((100% - 32px) / 3));
+        justify-content: center;
+    }
 
     /* ---- Cartes : grandes, image bien visible, un seul texte en bas ---- */
     .carte {
@@ -132,7 +136,6 @@
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .grille-bas .carte { min-height: 175px; }
 
     .carte:hover {
         transform: translateY(-3px) scale(1.01);
@@ -230,7 +233,7 @@
 
     </div>
 
-    <!-- Ligne 2 : 4 cartes -->
+    <!-- Ligne 2 : 2 cartes -->
     <div class="grille-bas">
 
         <a href="envoyer_message.php" class="carte cyan" style="background-image:url('icons/envoyer_message.png')">
@@ -241,10 +244,6 @@
             <div class="carte-texte"><span>Ajouter une adresse</span><span class="fleche">→</span></div>
         </a>
 
-
-        <a href="historique.php" class="carte orange" style="background-image:url('icons/historique.png')">
-            <div class="carte-texte"><span>Historique des envois</span><span class="fleche">→</span></div>
-        </a>
 
     </div>
 

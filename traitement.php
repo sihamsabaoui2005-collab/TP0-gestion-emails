@@ -1,5 +1,6 @@
 <?php
 // Partie 1, sous forme de fonction réutilisable (chemins en paramètres)
+require_once __DIR__ . "/validation_avancee.php";
 
 function traiterEmails(string $cheminListe, string $dossierResultats): array
 {
@@ -17,7 +18,9 @@ function traiterEmails(string $cheminListe, string $dossierResultats): array
 
     foreach ($emails as $email) {
         $email = trim($email);
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Validation avancée : syntaxe + domaine + MX (Partie 4)
+        $erreur = validerEmailAvance($email);
+        if ($erreur === '') {
             if (!in_array($email, $emailsValides)) {
                 $emailsValides[] = $email;
             }

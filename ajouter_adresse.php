@@ -1,4 +1,7 @@
 <?php
+require "validation_avancee.php";
+require "fonctions_email.php";
+
 $dossierResultats = __DIR__ . '/resultats';
 $cheminListe = $dossierResultats . '/Emailst.txt';
 
@@ -8,37 +11,33 @@ $typeMessage = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nouvelleAdresse = trim($_POST['adresse'] ?? '');
 
-    // Validation cote SERVEUR (la validation cote CLIENT est faite en JS plus bas)
-    if (!filter_var($nouvelleAdresse, FILTER_VALIDATE_EMAIL)) {
-        $message = "Adresse email invalide.";
+    // Validation cote SERVEUR avancée : syntaxe + domaine + MX (Partie 4)
+    // (la validation cote CLIENT est faite en JS plus bas)
+    $erreur = validerEmailAvance($nouvelleAdresse);
+
+    if ($erreur !== '') {
+        $message = $erreur;
+        $typeMessage = 'erreur';
+    } elseif (adresseExisteDeja($nouvelleAdresse, $cheminListe)) {
+        $message = "Cette adresse existe déjà dans la liste.";
         $typeMessage = 'erreur';
     } else {
-        $emailsExistants = file_exists($cheminListe)
-            ? file($cheminListe, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
-            : [];
+        // Partie 4 : au lieu d'ajouter directement, on envoie un email de confirmation
+        $jeton = creerJetonConfirmation($nouvelleAdresse, $dossierResultats);
+        $lien = 'http://' . $_SERVER['HTTP_HOST'] . '/confirmer_adresse.php?jeton=' . $jeton;
 
-        if (in_array($nouvelleAdresse, $emailsExistants, true)) {
-            $message = "Cette adresse existe déjà dans la liste.";
-            $typeMessage = 'erreur';
-        } else {
-            if (!is_dir($dossierResultats)) {
-                mkdir($dossierResultats, 0777, true);
-            }
+        $objet = "Confirmez votre adresse - EmailHub";
+        $contenu = "Bonjour,\n\n"
+                 . "Pour confirmer l'ajout de votre adresse à la liste EmailHub, cliquez sur ce lien :\n"
+                 . $lien . "\n\n"
+                 . "Ce lien est valable 24 heures. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.";
 
-            // on ajoute l'adresse, on retrie, et on reecrit Emailst.txt
-            $emailsExistants[] = $nouvelleAdresse;
-            sort($emailsExistants);
-            file_put_contents($cheminListe, implode("\n", $emailsExistants));
-
-            // on l'ajoute aussi dans le fichier de son domaine
-            $parties = explode('@', $nouvelleAdresse);
-            $domaine = strtolower($parties[1]);
-            $domaine = str_replace('.', '_', $domaine);
-            $cheminDomaine = $dossierResultats . '/' . $domaine . '.txt';
-            file_put_contents($cheminDomaine, $nouvelleAdresse . "\n", FILE_APPEND);
-
-            $message = "Adresse « $nouvelleAdresse » ajoutée avec succès.";
+        if (envoyerEmail($nouvelleAdresse, $objet, $contenu)) {
+            $message = "Un email de confirmation a été envoyé à « $nouvelleAdresse ». L'adresse sera ajoutée après confirmation.";
             $typeMessage = 'succes';
+        } else {
+            $message = "Impossible d'envoyer l'email de confirmation.";
+            $typeMessage = 'erreur';
         }
     }
 }
@@ -67,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <img src="icons/ajouter_adresse.png" alt="">
         </div>
         <h2>Ajouter une adresse</h2>
-        <p class="explication">Saisissez une nouvelle adresse email à ajouter à la liste.</p>
+        <p class="explication">Saisissez une nouvelle adresse email. Un email de confirmation lui sera envoyé avant son ajout à la liste.</p>
 
         <form method="post" id="formAjout" novalidate>
             <div class="champ">
