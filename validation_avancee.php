@@ -83,9 +83,12 @@ function ajouterAdresseALaListe(string $email, string $dossierResultats): void
     file_put_contents($cheminDomaine, $email . "\n", FILE_APPEND);
 }
 
-// ---------- 4) Confirmation par email ----------
+// ---------- 4) Confirmation par code envoyé par email ----------
 // Les adresses en attente de confirmation sont gardées dans resultats/en_attente.json
-// sous la forme : { "jeton": { "email": "...", "date": 1234567890 } }
+// sous la forme : { "email": { "code": "482915", "date": 1234567890, "tentatives": 0 } }
+
+const DUREE_VALIDITE_CODE = 10 * 60; // le code est valable 10 minutes
+const TENTATIVES_MAX = 3;            // nombre maximum d'essais avec un mauvais code
 
 function lireAdressesEnAttente(string $dossierResultats): array
 {
@@ -105,12 +108,59 @@ function enregistrerAdressesEnAttente(array $enAttente, string $dossierResultats
     file_put_contents($dossierResultats . '/en_attente.json', json_encode($enAttente, JSON_PRETTY_PRINT));
 }
 
-// Crée un jeton secret pour l'adresse et le sauvegarde. Retourne le jeton.
-function creerJetonConfirmation(string $email, string $dossierResultats): string
+// Crée un code à 6 chiffres pour l'adresse et le sauvegarde. Retourne le code.
+// Si un ancien code existait pour cette adresse, il est remplacé.
+function creerCodeConfirmation(string $email, string $dossierResultats): string
 {
-    $jeton = bin2hex(random_bytes(16)); // 32 caractères aléatoires
+    $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT); // ex : "048291"
     $enAttente = lireAdressesEnAttente($dossierResultats);
-    $enAttente[$jeton] = ['email' => $email, 'date' => time()];
+    $enAttente[$email] = ['code' => $code, 'date' => time(), 'tentatives' => 0];
     enregistrerAdressesEnAttente($enAttente, $dossierResultats);
-    return $jeton;
+    return $code;
+}
+
+// Supprime le code en attente d'une adresse (code utilisé, expiré ou annulé)
+function supprimerCodeConfirmation(string $email, string $dossierResultats): void
+{
+    $enAttente = lireAdressesEnAttente($dossierResultats);
+    unset($enAttente[$email]);
+    enregistrerAdressesEnAttente($enAttente, $dossierResultats);
+}
+
+// Vérifie le code saisi par l'utilisateur.
+// Retourne '' si le code est bon, sinon le message d'erreur.
+function verifierCodeConfirmation(string $email, string $codeSaisi, string $dossierResultats): string
+{
+    $enAttente = lireAdressesEnAttente($dossierResultats);
+
+    if (!isset($enAttente[$email])) {
+        return "Aucun code en attente pour cette adresse. Veuillez saisir votre adresse à nouveau.";
+    }
+
+    $infos = $enAttente[$email];
+
+    // le code a expiré
+    if (time() - $infos['date'] > DUREE_VALIDITE_CODE) {
+        supprimerCodeConfirmation($email, $dossierResultats);
+        return "Ce code a expiré. Veuillez saisir votre adresse à nouveau.";
+    }
+
+    // mauvais code
+    if (!hash_equals($infos['code'], $codeSaisi)) {
+        $infos['tentatives']++;
+
+        if ($infos['tentatives'] >= TENTATIVES_MAX) {
+            supprimerCodeConfirmation($email, $dossierResultats);
+            return "Trop de tentatives incorrectes. Le code a été annulé, veuillez saisir votre adresse à nouveau.";
+        }
+
+        $enAttente[$email] = $infos;
+        enregistrerAdressesEnAttente($enAttente, $dossierResultats);
+        $reste = TENTATIVES_MAX - $infos['tentatives'];
+        return "Code incorrect. Il vous reste $reste tentative(s).";
+    }
+
+    // bon code : il ne sert qu'une seule fois
+    supprimerCodeConfirmation($email, $dossierResultats);
+    return '';
 }

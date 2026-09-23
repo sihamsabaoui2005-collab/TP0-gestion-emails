@@ -176,6 +176,23 @@ body.accent-orange { --accent: #ffa63e; --accent-rgb: 255,166,62; }
 
 .bouton:hover { filter: brightness(1.08); }
 
+/* Partie 4 : boutons "Renvoyer le code" et "Changer d'adresse" */
+.boutons-secondaires {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.boutons-secondaires form { flex: 1; }
+
+.bouton.secondaire {
+    background: transparent;
+    color: rgb(var(--accent-rgb));
+    border: 1px solid rgb(var(--accent-rgb));
+    box-shadow: none;
+    font-size: 14px;
+}
+
 .message {
     margin-top: 18px;
     padding: 12px 16px;
